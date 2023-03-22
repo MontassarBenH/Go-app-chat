@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chat App</title>
+</head>
+<body>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Log in</button>
+
+    <div id="chat" style="display: none;">
+        <ul id="messages"></ul>
+        <input type="text" id="message" placeholder="Message">
+        <button onclick="send()">Send</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script>
+        var socket = null;
+        var username = null;
+
+        function login() {
+            username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            socket = io("ws://localhost:8080?username=" + username + "&password=" + password);
+
+            socket.on("connect", function() {
+                document.getElementById("chat").style.display = "block";
+                document.getElementById("username").value = "";
+                document.getElementById("password").value = "";
+                document.getElementById("username").disabled = true;
+                document.getElementById("password").disabled = true;
+            });
+
+            socket.on("message", function(msg) {
+                var li = document.createElement("li");
+                li.innerText = msg.username + ": " + msg.text;
+                document.getElementById("messages").appendChild(li);
+            });
+
+            socket.on("disconnect", function() {
+                document.getElementById("chat").style.display = "none";
+                document.getElementById("username").disabled = false;
+                document.getElementById("password").disabled = false;
+            });
+        }
+
+        function send() {
+            var text = document.getElementById("message").value;
+            socket.emit("message", { username: username, text: text });
+            document.getElementById("message").value = "";
+        }
+    </script>
+</body>
+</html>
